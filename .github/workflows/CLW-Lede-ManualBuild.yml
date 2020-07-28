@@ -4,7 +4,7 @@
 # Author: CLW
 #=================================================
 
-name: CLW-ManualBuild-Lede
+name: CLW-Lede-ManualBuild
 
 on: 
   #release:
