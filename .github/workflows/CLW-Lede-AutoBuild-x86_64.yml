@@ -4,7 +4,7 @@
 # Author: CLW
 #=================================================
 
-name: CLW-Lede-AutoBuild
+name: CLW-Lede-AutoBuild-x86_64
 
 on: 
   release:
