@@ -4,7 +4,7 @@
 # Author: CLW
 #=================================================
 
-name: CLW-AutoBuild-Lede
+name: CLW-Lede-AutoBuild
 
 on: 
   release:
