@@ -7,12 +7,12 @@
 name: CLW-Lede-ManualBuild
 
 on: 
-  #release:
-  #  types: [published]
+  release:
+    types: [published]
 
-  #push:
-  #  branches: 
-  #    - master
+  push:
+    branches: 
+      - master
 
   #schedule:
   #  - cron: 0 8 * * 5
@@ -35,6 +35,7 @@ jobs:
       run: |
         sudo -E apt-get update
         sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget swig rsync iptables coreutils bash curl ca-certificates ipset ccache
+        
     - name: Clone lede code
       env: 
         REPO_URL: https://github.com/coolsnowwolf/lede
