@@ -7,8 +7,8 @@
 name: CLW-Lede-AutoBuild-x86_64
 
 on: 
-  #release:
-  #  types: [published]
+  release:
+    types: [published]
 
   #push:
   #  branches: 
