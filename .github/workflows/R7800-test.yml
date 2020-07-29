@@ -37,7 +37,7 @@ env:
   #DIY_SH: OpenWrt-R7800-Lean.sh
   DIY_SH: customize.sh
   # 开启SSH连接
-  SSH_ACTIONS: false
+  SSH_ACTIONS: true
   # 上传分支
   UPLOAD_BRANCH: false
   # 分支
@@ -199,42 +199,106 @@ jobs:
       working-directory: ./openwrt
       run:  ./scripts/feeds install -a
 
-    # 加载自定义配置文件
-    - name: Load Custom Configuration
+    - name: Load custom configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        #[ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        #chmod +x ./customize.sh && ./customize.sh
-        #cd openwrt && make defconfig
-        
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
         chmod +x $DIY_SH
         cd openwrt
         ../$DIY_SH
         make defconfig
 
-    # SSH连接
-    - name: Debugging with tmate SSH
-      uses: csexton/debugger-action@master
-      if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
+    - name: SSH connection to Actions
+      uses: P3TERX/debugger-action@master
+      if: env.SSH_ACTIONS == 'true'
 
-    # 下载软件包
-    - name: Make Download
-      working-directory: ./openwrt
+    - name: Download package
       id: package
       run: |
-        make download -j8
-        #make download -j$(nproc)
+        cd openwrt
+        #make download -j8
+        make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-    
-    # 编译固件
-    - name: Compile Firmware
-      working-directory: ./openwrt
+        
+    - name: Compile the firmware
       id: compile
       run: |
+        cd openwrt
         echo -e "$(nproc) thread compile"
+        #原程式碼：x86_64 可編譯完成 但 R7800 會編譯失敗
         make -j$(nproc) || make -j1 V=s
-        echo "::set-output name=status::success"        
+        #改成下面程式碼：(編譯失敗)
+        #make -j1 V=s
+        echo "::set-output name=status::success"
+
+    - name: Upload bin directory
+      #uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@main
+      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
+      with:
+        name: OpenWrt_directory
+        path: openwrt/bin
+
+    - name: Organize files
+      id: organize
+      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+      run: |
+        cd openwrt/bin/targets/*/*
+        rm -rf packages
+        echo "::set-env name=FIRMWARE::$(pwd)"
+        echo "::set-output name=status::success"
+
+    - name: Upload firmware directory
+      #uses: actions/upload-artifact@master
+      uses: actions/upload-artifact@main
+      #if: steps.organize.outputs.status == 'success' && !cancelled()
+      with:
+        #name: OpenWrt_firmware
+        #path: ${{ env.FIRMWARE }}
+        name: OpenWrt
+        path: openwrt/bin
+
+
+
+
+
+    ## 加载自定义配置文件
+    #- name: Load Custom Configuration
+    #  run: |
+    #    [ -e files ] && mv files openwrt/files
+    #    #[ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+    #    #chmod +x ./customize.sh && ./customize.sh
+    #    #cd openwrt && make defconfig
+        
+    #    chmod +x $DIY_SH
+    #    cd openwrt
+    #    ../$DIY_SH
+    #    make defconfig
+
+    ## SSH连接
+    #- name: Debugging with tmate SSH
+    #  uses: csexton/debugger-action@master
+    #  if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
+
+    ## 下载软件包
+    #- name: Make Download
+    #  working-directory: ./openwrt
+    #  id: package
+    #  run: |
+    #    make download -j8
+    #    #make download -j$(nproc)
+    #    find dl -size -1024c -exec ls -l {} \;
+    #    find dl -size -1024c -exec rm -f {} \;
+    
+    ## 编译固件
+    #- name: Compile Firmware
+    #  working-directory: ./openwrt
+    #  id: compile
+    #  run: |
+    #    echo -e "$(nproc) thread compile"
+    #    make -j$(nproc) || make -j1 V=s
+    #    echo "::set-output name=status::success"        
     
     ## 上传到分支 By yfdoor
     #- name: Upload Branch
@@ -276,39 +340,39 @@ jobs:
     #    echo "::set-env name=BIN::$PWD"
     #    echo "::set-output name=status::success"
         
-    # 上传 Bin 文件夹    
-    - name: Upload all-bin To CowTransfer
-      if: steps.organize4binfiles.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
-      run: |
-        curl -fsSL git.io/file-transfer | sh
-        ./transfer cow --block 2621440 -s -p 99 -t 3 --hash --no-progress ${BIN} 2>&1 | tee cowtransfer.log
-        echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-        echo "::set-env name=IPK_URL::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
+    ## 上传 Bin 文件夹    
+    #- name: Upload all-bin To CowTransfer
+    #  if: steps.organize4binfiles.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
+    #  run: |
+    #    curl -fsSL git.io/file-transfer | sh
+    #    ./transfer cow --block 2621440 -s -p 99 -t 3 --hash --no-progress ${BIN} 2>&1 | tee cowtransfer.log
+    #    echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
+    #    echo "::set-env name=IPK_URL::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
 
-    # 整理文件
-    - name: Organize Files
-      id: organize
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        mv openwrt/.config openwrt/bin/targets/*/*
-        mv openwrt/bin/upload/*.zip openwrt/bin/targets/*/*
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
-        rm -rf *uImage
-        rm -rf *.manifest
-        rm -rf *.seed
-        rm -rf *.buildinfo
-        rm -rf *.tar.xz
-        echo "::set-env name=FIRMWARE::$PWD"
-        echo "::set-output name=status::success"
+    ## 整理文件
+    #- name: Organize Files
+    #  id: organize
+    #  if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
+    #  run: |
+    #    mv openwrt/.config openwrt/bin/targets/*/*
+    #    mv openwrt/bin/upload/*.zip openwrt/bin/targets/*/*
+    #    cd openwrt/bin/targets/*/*
+    #    rm -rf packages
+    #    rm -rf *uImage
+    #    rm -rf *.manifest
+    #    rm -rf *.seed
+    #    rm -rf *.buildinfo
+    #    rm -rf *.tar.xz
+    #    echo "::set-env name=FIRMWARE::$PWD"
+    #    echo "::set-output name=status::success"
     
-    # 上传固件
-    - name: Upload Firmware Directory
-      uses: actions/upload-artifact@main
-      if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        name: ${{ env.BUILD_USER }}-${{ env.DATE }}-OpenWrt-${{ env.BRANCH }}-Firmware
-        path: ${{ env.FIRMWARE }}
+    ## 上传固件
+    #- name: Upload Firmware Directory
+    #  uses: actions/upload-artifact@main
+    #  if: steps.organize.outputs.status == 'success' && !cancelled()
+    #  with:
+    #    name: ${{ env.BUILD_USER }}-${{ env.DATE }}-OpenWrt-${{ env.BRANCH }}-Firmware
+    #    path: ${{ env.FIRMWARE }}
 
     ## 上传固件到奶牛快传
     #- name: Upload Firmware To CowTransfer
