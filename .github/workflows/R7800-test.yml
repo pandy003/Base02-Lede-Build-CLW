@@ -34,7 +34,8 @@ env:
   # PassWall插件包
   EX_PKG: true
   # 脚本
-  DIY_SH: OpenWrt-R7800-Lean.sh
+  #DIY_SH: OpenWrt-R7800-Lean.sh
+  DIY_SH: customize.sh
   # 开启SSH连接
   SSH_ACTIONS: false
   # 上传分支
@@ -202,14 +203,14 @@ jobs:
     - name: Load Custom Configuration
       run: |
         [ -e files ] && mv files openwrt/files
-        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x ./customize.sh && ./customize.sh
-        cd openwrt && make defconfig
+        #[ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        #chmod +x ./customize.sh && ./customize.sh
+        #cd openwrt && make defconfig
         
-        #chmod +x $DIY_SH
-        #cd openwrt
-        #../$DIY_SH
-        #make defconfig
+        chmod +x $DIY_SH
+        cd openwrt
+        ../$DIY_SH
+        make defconfig
 
     # SSH连接
     - name: Debugging with tmate SSH
