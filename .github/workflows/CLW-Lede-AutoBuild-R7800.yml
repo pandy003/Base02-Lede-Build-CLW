@@ -7,18 +7,18 @@
 name: CLW-Lede-AutoBuild-R7800
 
 on: 
-  release:
-    types: [published]
+  #release:
+  #  types: [published]
 
-  #push:
-  #  branches: 
-  #    - master
+  push:
+    branches: 
+      - master
 
   #schedule:
   #  - cron: 0 8 * * 5
   
-  watch:
-    types: [started]
+  #watch:
+  #  types: [started]
 
 jobs:
   build:
@@ -176,7 +176,8 @@ jobs:
       run: |
         cd openwrt
         echo -e "$(nproc) thread build."
-        make -j$(nproc) V=s
+        #make -j$(nproc) V=s
+        make -j1 V=s
 
     - name : Upload artifact
       #uses: actions/upload-artifact@master
