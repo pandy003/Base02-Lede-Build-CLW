@@ -1,117 +1,53 @@
 #=================================================
-# https://github.com/ClayMoreBoy/OpenWrt-Actions-R7800
-# Description: Build OpenWrt using GitHub Actions
+# Description: Build lede using GitHub Actions
 # Lisence: MIT
-# Author: ClayMoreBoy
-# Github: https://github.com/ClayMoreBoy
+# Author: CLW
 #=================================================
 
-name: OpenWrt-R7800-Lean
+name: CLW-Lede-AutoBuild-x86_64
 
-on:
-  #Release 发布触发
-  #release:
-  #  types: [published]
- 
-  #编辑触发
-  push:
-    branches: 
-      - master
-  
-  #定时触发
+on: 
+  release:
+    types: [published]
+
+  #push:
+  #  branches: 
+  #    - master
+
   #schedule:
-  #  - cron: 0 1 * * *
-
-  #点赞触发
+  #  - cron: 0 8 * * 5
+  
   #watch:
   #  types: [started]
-
-env:
-  # 源
-  REPO_URL: https://github.com/coolsnowwolf/lede
-  # 分支
-  REPO_BRANCH: master
-  # PassWall插件包
-  #EX_PKG: true
-  # 脚本
-  #DIY_SH: OpenWrt-R7800-Lean.sh
-  DIY_SH: customize.sh
-  # 开启SSH连接
-  SSH_ACTIONS: true
-  # 上传分支
-  #UPLOAD_BRANCH: false
-  # 分支
-  #BRANCH: R7800-Lean
-  # Github 用户名
-  #GITHUB_USER_NAME: badsirius
-  # Github 邮箱
-  #GITHUB_USER_EMAIL: ${{ secrets.EMAIL }}
-  # Github
-  #GITHUB: github.com/badsirius/actions-openwrt-r7800.git
-  # 上传BIN所有内容
-  #UPLOAD_BIN_DIR: true
-  # 上传固件
-  #UPLOAD_FIRMWARE: true
-  # 上传到奶牛快传
-  #UPLOAD_COWTRANSFER: true
-  # 创建+上传发布
-  #CREATE_RELEASE: true
-  # 编译者
-  #BUILD_USER: badsirius
-  # 微信通知
-  #SEND_WECHAT_MSG: false
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    #if: github.event.repository.owner.id == github.event.sender.id
 
     steps:
-    # 校验本地文件
     - name: Checkout
+      #uses: actions/checkout@master
       uses: actions/checkout@main
 
-    # 初始化编译环境
     - name: Initialization environment
       env:
         DEBIAN_FRONTEND: noninteractive
       run: |
-        #docker rmi $(docker images -q)
-        #sudo -E rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc
-        #sudo -E apt-get remove -y --purge azure-cli ghc zulu* hhvm llvm* firefox google* dotnet* powershell mysql* php* mssql-tools msodbcsql17
-        sudo -E apt-get update -y
-        sudo -E apt-get full-upgrade -y
+        sudo -E apt-get update
+        #sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget swig rsync iptables coreutils bash curl ca-certificates ipset ccache
         sudo -E apt-get install -y build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-8 gcc++-8 gcc-8-multilib g++-8-multilib p7zip p7zip-full msmtp libssl-dev texinfo libreadline-dev libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint ccache curl wget vim nano python python3 python-pip python3-pip python-ply python3-ply haveged lrzsz device-tree-compiler scons antlr3 gperf ecj fastjar re2c swig rsync iptables coreutils bash ca-certificates ipset
-        #sudo -E ln -sf /usr/bin/gcc-8 /usr/bin/gcc
-        #sudo -E ln -sf /usr/bin/g++-8 /usr/bin/g++
-        #sudo -E ln -sf /usr/bin/gcc-ar-8 /usr/bin/gcc-ar
-        #sudo -E ln -sf /usr/bin/gcc-nm-8 /usr/bin/gcc-nm
-        #sudo -E ln -sf /usr/bin/gcc-ranlib-8 /usr/bin/gcc-ranlib
-        #sudo -E apt-get autoremove -y --purge
-        #sudo -E apt-get clean -y
-        #sudo -E rm -rf /usr/share/dotnet /etc/mysql /etc/php
 
-    # 克隆源代码 By bobotoy
-    - name: Clone source code
+    - name: Clone lede code
+      env: 
+        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_BRANCH: master
       run: |
         git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
         cd openwrt
-        useVersionInfo=$(git show -s --date=short --format="Author: %an<br/>Date: %cd<br/>Commit: %s")
-        echo "::set-env name=useVersionInfo::$useVersionInfo"
-        echo "::set-env name=DATE::$(TZ=UTC-8 date "+%Y%m%d")"
-        echo "::set-env name=RELEASE_DATE::$(TZ=UTC-8 date "+%Y-%m-%d")"
         #加入SSR Plus
         sed -i '11s/#//' feeds.conf.default
         sed -i '11a src-git lienol https://github.com/Lienol/openwrt-package' feeds.conf.default
  
-    # 增加 PassWall 插件源 By rohu168
-    #- name: Update and install feeds passwall
-    #  if: env.EX_PKG == 'true'
-    #  run: |
-    #    chmod +x ssr-plus_passwall.sh && cp ssr-plus_passwall.sh ./openwrt && cd openwrt && ./ssr-plus_passwall.sh
-        
-    # 更新源 sed -i 's/\"#src-git\"/\"src-git\"/g' ./feeds.conf.default
-         
     - name: Clone openclash code
       run: |
         git clone https://github.com/chancat87/OpenClash.git
@@ -121,14 +57,14 @@ jobs:
       run: |
         cd openwrt/package
         git clone https://github.com/frainzy1477/luci-app-clash.git
-
+        
     - name: Clone Hello World code
       run: |
         cd openwrt/package/lean
         #git lua-maxminddb 依赖
         git clone https://github.com/jerrykuku/lua-maxminddb.git  
         git clone https://github.com/jerrykuku/luci-app-vssr.git 
-      
+        
     - name: Clone adGuardhome code
       run: |
         cd openwrt/package
@@ -185,257 +121,67 @@ jobs:
         cd openwrt/feeds/luci/modules/luci-compat
         sed -i '17d' Makefile
         sed -i '16a include $(TOPDIR)/feeds/luci/luci.mk' Makefile
-            
-    #- name: Update Feeds
-    #  if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
-    #  working-directory: ./openwrt
-    #  run:  |
-    #    ./scripts/feeds clean
-    #    ./scripts/feeds update -a
-
-    ## 安装源
-    #- name: Install Feeds
-    #  if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
-    #  working-directory: ./openwrt
-    #  run:  ./scripts/feeds install -a
-
+        
     - name: Update & Install feeds
       run: |
         cd openwrt
         ./scripts/feeds update -a
         ./scripts/feeds install -a
-        ./scripts/feeds install -a
+        #./scripts/feeds install -a
 
-    - name: Load custom configuration
+    - name: Configuration Customization - Build_Selection
+      env:
+        #設定配置
+        #CONFIG_FILE: 'x86_64.config'
+        #選一組要編譯的配置
+        #(x86_64)
+        #設定配置：lede（含 SSR Plus）↓
+        #CONFIG_FILE: 'CLW_x86_64_lede.config'
+        #設定配置：lede + passwall + openClash ↓
+        #CONFIG_FILE: 'CLW_x86_64_base01.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World ↓
+        #CONFIG_FILE: 'CLW_x86_64_base02.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns ↓
+        #CONFIG_FILE: 'CLW_x86_64_base03.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns + dockerman ↓
+        CONFIG_FILE: 'CLW_x86_64_base04.config'
+        #設定配置：lede + passwall + openClash + transmission + adGuardhome + smartdns + dockerman ↓
+        #CONFIG_FILE: 'CLW_x86_64_base_CLW01.config'
+        #(R7800)
+        #設定配置：lede（含 SSR Plus）↓
+        #CONFIG_FILE: 'CLW_R7800_lede.config'
+        #設定配置：lede + passwall + openClash ↓
+        #CONFIG_FILE: 'CLW_R7800_base01.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World ↓
+        #CONFIG_FILE: 'CLW_R7800_base02.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns ↓
+        #CONFIG_FILE: 'CLW_R7800_base03.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns + dockerman ↓
+        #CONFIG_FILE: 'CLW_R7800_base04.config'
+        #設定配置：lede + passwall + openClash + transmission + adGuardhome + smartdns + dockerman ↓
+        #CONFIG_FILE: 'CLW_R7800_base_CLW01.config
+        
       run: |
-        [ -e files ] && mv files openwrt/files
         [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-        chmod +x $DIY_SH
-        cd openwrt
-        ../$DIY_SH
-        make defconfig
-
-    - name: SSH connection to Actions
-      uses: P3TERX/debugger-action@master
-      if: env.SSH_ACTIONS == 'true'
-
+        chmod +x ./customize.sh && ./customize.sh
+        cd openwrt && make defconfig
+        
     - name: Download package
-      id: package
       run: |
         cd openwrt
-        #make download -j8
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-        
-    - name: Compile the firmware
-      id: compile
+
+    - name: Build firmware
       run: |
         cd openwrt
-        echo -e "$(nproc) thread compile"
-        #原程式碼：x86_64 可編譯完成 但 R7800 會編譯失敗
-        make -j$(nproc) || make -j1 V=s
-        #改成下面程式碼：(編譯失敗)
-        #make -j1 V=s
-        echo "::set-output name=status::success"
+        echo -e "$(nproc) thread build."
+        make -j$(nproc) V=s
 
-    - name: Upload bin directory
+    - name : Upload artifact
       #uses: actions/upload-artifact@master
       uses: actions/upload-artifact@main
-      if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true'
       with:
-        name: OpenWrt_directory
-        path: openwrt/bin
-
-    - name: Organize files
-      id: organize
-      if: env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-      run: |
-        cd openwrt/bin/targets/*/*
-        rm -rf packages
-        echo "::set-env name=FIRMWARE::$(pwd)"
-        echo "::set-output name=status::success"
-
-    - name: Upload firmware directory
-      #uses: actions/upload-artifact@master
-      uses: actions/upload-artifact@main
-      #if: steps.organize.outputs.status == 'success' && !cancelled()
-      with:
-        #name: OpenWrt_firmware
-        #path: ${{ env.FIRMWARE }}
         name: OpenWrt
         path: openwrt/bin
-
-
-
-
-
-    ## 加载自定义配置文件
-    #- name: Load Custom Configuration
-    #  run: |
-    #    [ -e files ] && mv files openwrt/files
-    #    #[ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
-    #    #chmod +x ./customize.sh && ./customize.sh
-    #    #cd openwrt && make defconfig
-        
-    #    chmod +x $DIY_SH
-    #    cd openwrt
-    #    ../$DIY_SH
-    #    make defconfig
-
-    ## SSH连接
-    #- name: Debugging with tmate SSH
-    #  uses: csexton/debugger-action@master
-    #  if: env.SSH_ACTIONS == 'true' || contains(github.event.action, 'ssh')
-
-    ## 下载软件包
-    #- name: Make Download
-    #  working-directory: ./openwrt
-    #  id: package
-    #  run: |
-    #    make download -j8
-    #    #make download -j$(nproc)
-    #    find dl -size -1024c -exec ls -l {} \;
-    #    find dl -size -1024c -exec rm -f {} \;
-    
-    ## 编译固件
-    #- name: Compile Firmware
-    #  working-directory: ./openwrt
-    #  id: compile
-    #  run: |
-    #    echo -e "$(nproc) thread compile"
-    #    make -j$(nproc) || make -j1 V=s
-    #    echo "::set-output name=status::success"        
-    
-    ## 上传到分支 By yfdoor
-    #- name: Upload Branch
-    #  if: steps.compile.outputs.status == 'success' && env.UPLOAD_BRANCH == 'true' && !cancelled() 
-    #  env:
-    #      GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-    #  run: |
-    #      cd openwrt/bin/targets/*/*
-    #      rm -rf *uImage
-    #      rm -rf *.manifest
-    #      rm -rf *.seed
-    #      rm -rf *.buildinfo
-    #      rm -rf *.tar.xz
-    #      cd /home/runner/work/actions-openwrt-r7800/actions-openwrt-r7800/openwrt/bin
-    #      git init
-    #      git config user.name $GITHUB_USER_NAME
-    #      git config user.email $GITHUB_USER_EMAIL
-    #      git add .
-    #      git commit -m "Update OpenWrt_"$BRANCH
-    #      git push --force --quiet https://${{ secrets.RELEASE_TOKEN }}@$GITHUB HEAD:OpenWrt-$BRANCH
-    
-    
-    ## 整理bin文件
-    #- name: Organize Bin Files 
-    #  id: organize4binfiles
-    #  if: steps.compile.outputs.status == 'success' && env.UPLOAD_BIN_DIR == 'true' && !cancelled()
-    #  run: |
-    #    cd openwrt/bin/targets/*/*
-    #    rm -rf *uImage
-    #    rm -rf *.manifest
-    #    rm -rf *.seed
-    #    rm -rf *.buildinfo
-    #    rm -rf *.tar.xz
-    #    cd ../../..
-    #    zip r7800-all-bins.zip ./*
-    #    mkdir upload
-    #    mv r7800-all-bins.zip ./upload
-    #    cd upload
-    #    echo "::set-env name=BIN::$PWD"
-    #    echo "::set-output name=status::success"
-        
-    ## 上传 Bin 文件夹    
-    #- name: Upload all-bin To CowTransfer
-    #  if: steps.organize4binfiles.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
-    #  run: |
-    #    curl -fsSL git.io/file-transfer | sh
-    #    ./transfer cow --block 2621440 -s -p 99 -t 3 --hash --no-progress ${BIN} 2>&1 | tee cowtransfer.log
-    #    echo "::warning file=cowtransfer.com::$(cat cowtransfer.log | grep https)"
-    #    echo "::set-env name=IPK_URL::$(cat cowtransfer.log | grep https | cut -f3 -d" ")"
-
-    ## 整理文件
-    #- name: Organize Files
-    #  id: organize
-    #  if: steps.compile.outputs.status == 'success' && env.UPLOAD_FIRMWARE == 'true' && !cancelled()
-    #  run: |
-    #    mv openwrt/.config openwrt/bin/targets/*/*
-    #    mv openwrt/bin/upload/*.zip openwrt/bin/targets/*/*
-    #    cd openwrt/bin/targets/*/*
-    #    rm -rf packages
-    #    rm -rf *uImage
-    #    rm -rf *.manifest
-    #    rm -rf *.seed
-    #    rm -rf *.buildinfo
-    #    rm -rf *.tar.xz
-    #    echo "::set-env name=FIRMWARE::$PWD"
-    #    echo "::set-output name=status::success"
-    
-    ## 上传固件
-    #- name: Upload Firmware Directory
-    #  uses: actions/upload-artifact@main
-    #  if: steps.organize.outputs.status == 'success' && !cancelled()
-    #  with:
-    #    name: ${{ env.BUILD_USER }}-${{ env.DATE }}-OpenWrt-${{ env.BRANCH }}-Firmware
-    #    path: ${{ env.FIRMWARE }}
-
-    ## 上传固件到奶牛快传
-    #- name: Upload Firmware To CowTransfer
-    #  if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
-    #  run: |
-    #    curl -fsSL git.io/file-transfer | sh
-    #    ./transfer cow --block 2621440 -s -p 99 -t 3 --hash --no-progress ${FIRMWARE} 2>&1 | tee anothercowtransfer.log
-    #    echo "::warning file=cowtransfer.com::$(cat anothercowtransfer.log | grep https)"
-    #    echo "::set-env name=COWTRANSFER_URL::$(cat anothercowtransfer.log | grep https | cut -f3 -d" ")"
-    
-    #- name: Upload firmware to WeTransfer
-    #  if: steps.organize.outputs.status == 'success' && env.UPLOAD_COWTRANSFER == 'true' && !cancelled()
-    #  run: |
-    #    curl -fsSL git.io/file-transfer | sh
-    #    ./transfer wet -s -p 16 --no-progress ${FIRMWARE} 2>&1 | tee wetransfer.log
-    #    echo "::warning file=wetransfer.com::$(cat wetransfer.log | grep https)"
-    #    echo "::set-env name=WETRANSFER_URL::$(cat wetransfer.log | grep https | cut -f3 -d" ")"
-
-    ## 生成标签
-    #- name: Generate Tag
-    #  id: tag
-    #  if: steps.compile.outputs.status == 'success' && env.CREATE_RELEASE == 'true' && !cancelled()
-    #  run: |
-    #    echo ::set-env name=RELEASE_TAG::"$(TZ=UTC-8 date +"%Y-%m-%d")"
-    #    echo "::set-output name=status::success"
-    
-    ## 发行固件
-    #- name: Upload Firmware To Release
-    #  uses: softprops/action-gh-release@v1
-    #  if: steps.tag.outputs.status == 'success' && !cancelled()
-    #  env:
-    #    GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
-    #  with:
-    #    name: Netgear ${{ env.BRANCH }} 🚀 | 自动编译 / ${{ env.RELEASE_TAG }}
-    #    tag_name: ${{ env.RELEASE_DATE }}
-    #    body: |            
-    #        1、本固件为自动编译
-    #        2、发行版中只提供完整的固件
-    #        3、需要单独IPK请到分支下载
-    #        4、源码：${{ env.REPO_URL }}
-    #        -- Build by ${{ env.BUILD_USER }} @ with Github Action on ${{ env.RELEASE_DATE }}
-    #        🚀 Auto build | 自动编译
-    #        🔗 [Cowtransfer | 奶牛快传](${{ env.COWTRANSFER_URL }}) 
-    #        🔗 [WeTransfer](${{ env.WETRANSFER_URL }})       
-    #        🚀 ALL IPK | 本固件编译的ipk
-    #        🔗 [Cowtransfer | 奶牛快传](${{ env.IPK_URL }}) 
-    #        当前使用版本:（编译前的最后一次大雕源码更新记录）            
-    #        ${{ env.useVersionInfo }}
-    #        ${{ github.event.commits[0].message }}
-    #    files: ${{ env.FIRMWARE }}/*
-
-    ## 微信通知
-    #- name: WeChat Notification
-    #  if: steps.compile.outputs.status == 'success' && env.SEND_WECHAT_MSG == 'true' && !cancelled()
-    #  uses: emon100/Action-Serverchan@master
-    #  with:
-    #    SCKEY: ${{ secrets.SCKEY }}
-    #    text: ${{ env.BRANCH }}固件编译完成！
-    #    desp: 源码:${{ env.REPO_URL }} 分支：${{ env.REPO_BRANCH }}
