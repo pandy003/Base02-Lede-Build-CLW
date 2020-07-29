@@ -186,18 +186,25 @@ jobs:
         sed -i '17d' Makefile
         sed -i '16a include $(TOPDIR)/feeds/luci/luci.mk' Makefile
             
-    - name: Update Feeds
-      if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
-      working-directory: ./openwrt
-      run:  |
-        ./scripts/feeds clean
-        ./scripts/feeds update -a
+    #- name: Update Feeds
+    #  if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
+    #  working-directory: ./openwrt
+    #  run:  |
+    #    ./scripts/feeds clean
+    #    ./scripts/feeds update -a
 
-    # 安装源
-    - name: Install Feeds
-      if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
-      working-directory: ./openwrt
-      run:  ./scripts/feeds install -a
+    ## 安装源
+    #- name: Install Feeds
+    #  if: env.REPO_URL != 'https://github.com/coolsnowwolf/lede'
+    #  working-directory: ./openwrt
+    #  run:  ./scripts/feeds install -a
+
+    - name: Update & Install feeds
+      run: |
+        cd openwrt
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        ./scripts/feeds install -a
 
     - name: Load custom configuration
       run: |
