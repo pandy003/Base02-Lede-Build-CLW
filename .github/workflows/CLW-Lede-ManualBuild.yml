@@ -7,8 +7,8 @@
 name: CLW-Lede-ManualBuild
 
 on: 
-  release:
-    types: [published]
+  #release:
+  #  types: [published]
 
   #push:
   #  branches: 
