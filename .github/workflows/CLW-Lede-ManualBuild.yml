@@ -21,6 +21,9 @@ on:
   watch:
     types: [started]
 
+env:
+  TZ: Asia/Taipei
+
 jobs:
   build:
     runs-on: ubuntu-latest
