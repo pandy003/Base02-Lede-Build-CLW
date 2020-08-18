@@ -39,7 +39,7 @@ jobs:
         #原程式碼(二列)：用在 R7800 可編譯完成，但 x86_64 會編譯失敗，需增加eSir修正部份
         sudo -E apt-get update
         sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev libz-dev patch python3.5 python2.7 unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex uglifyjs git-core gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx libelf-dev autoconf automake libtool autopoint device-tree-compiler g++-multilib antlr3 gperf wget swig rsync iptables coreutils bash curl ca-certificates ipset ccache
-
+        
     - name: Clone lede code
       env: 
         REPO_URL: https://github.com/coolsnowwolf/lede
@@ -79,7 +79,7 @@ jobs:
          mv luci-lib-docker/collections/luci-lib-docker openwrt/package/
          git clone https://github.com/lisaac/luci-app-dockerman.git
          mv luci-app-dockerman/applications/luci-app-dockerman openwrt/package/
-
+         
     - name: Fix dockerman code
       run: |
         cd openwrt/package/luci-app-dockerman
@@ -131,7 +131,7 @@ jobs:
         ./scripts/feeds update -a
         ./scripts/feeds install -a
         #./scripts/feeds install -a
-
+        
     - name: Configuration Customization - Build_Selection
       env:
         #設定配置
@@ -142,26 +142,39 @@ jobs:
         #CONFIG_FILE: 'CLW_x86_64_lede.config'
         #設定配置：lede + passwall + openClash ↓
         #CONFIG_FILE: 'CLW_x86_64_base01.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash ↓
         #CONFIG_FILE: 'CLW_x86_64_base02.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns ↓
         #CONFIG_FILE: 'CLW_x86_64_base03.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns + dockerman ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns + dockerman + Hello World ↓
         #CONFIG_FILE: 'CLW_x86_64_base04.config'
-        #設定配置：lede + passwall + openClash + transmission + adGuardhome + smartdns + dockerman ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + adGuardhome + smartdns + dockerman ↓
+        #CONFIG_FILE: 'CLW_x86_64_base_CLW01.config'
+        #(x86_AMD)
+        #設定配置：lede（含 SSR Plus）↓
+        #CONFIG_FILE: 'CLW_x86_64_lede.config'
+        #設定配置：lede + passwall + openClash ↓
+        #CONFIG_FILE: 'CLW_x86_64_base01.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash ↓
+        #CONFIG_FILE: 'CLW_x86_64_base02.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns ↓
+        #CONFIG_FILE: 'CLW_x86_64_base03.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns + dockerman + Hello World ↓
+        #CONFIG_FILE: 'CLW_x86_64_base04.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + adGuardhome + smartdns + dockerman ↓
         #CONFIG_FILE: 'CLW_x86_64_base_CLW01.config'
         #(R7800)
         #設定配置：lede（含 SSR Plus）↓
         #CONFIG_FILE: 'CLW_R7800_lede.config'
         #設定配置：lede + passwall + openClash ↓
-        #CONFIG_FILE: 'CLW_R7800_base01.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World ↓
+        CONFIG_FILE: 'CLW_R7800_base01.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash  ↓
         #CONFIG_FILE: 'CLW_R7800_base02.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns ↓
         #CONFIG_FILE: 'CLW_R7800_base03.config'
-        #設定配置：lede + passwall + openClash + transmission + frpc + clash + Hello World + adGuardhome + smartdns + dockerman ↓
-        CONFIG_FILE: 'CLW_R7800_base04.config'
-        #設定配置：lede + passwall + openClash + transmission + adGuardhome + smartdns + dockerman ↓
+        #設定配置：lede + passwall + openClash + transmission + frpc + clash + adGuardhome + smartdns + dockerman + Hello World ↓
+        #CONFIG_FILE: 'CLW_R7800_base04.config'
+        #設定配置：lede + passwall + openClash + transmission + frpc + adGuardhome + smartdns + dockerman ↓
         #CONFIG_FILE: 'CLW_R7800_base_CLW01.config
         
       run: |
@@ -175,13 +188,14 @@ jobs:
         make download -j$(nproc)
         find dl -size -1024c -exec ls -l {} \;
         find dl -size -1024c -exec rm -f {} \;
-
+        
     - name: Build firmware
       run: |
         cd openwrt
         echo -e "$(nproc) thread build."
         make -j$(nproc) V=s
-
+        #make -j1 V=s
+        
     - name : Upload artifact
       #uses: actions/upload-artifact@master
       uses: actions/upload-artifact@main
